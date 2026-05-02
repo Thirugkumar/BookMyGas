@@ -1,0 +1,52 @@
+[
+  {
+    "store_name": "Jaffna Sales Centre....Sri motars",
+    "address": "224 Stanley Rd, Jaffna",
+    "phone_number": "0212 220 694"
+  },
+  {
+    "store_name": "S. V. Murugesu",
+    "address": "10 Hospital Rd, Jaffna",
+    "phone_number": "0212 228 899"
+  },
+  {
+    "store_name": "Dhiyaa Trading Pvt Ltd.",
+    "address": "Stanly Road, Jaffna",
+    "phone_number": "075 794 8474"
+  },
+  {
+    "store_name": "Dhuhi Works Litro Gas Sub Dealers",
+    "address": "274 Navalar Rd, Jaffna",
+    "phone_number": "077 844 9651"
+  },
+  {
+    "store_name": "Litro Gas",
+    "address": "473 Jaffna-Kankesanturai Rd, Jaffna",
+    "phone_number": "075 954 1523"
+  },
+  {
+    "store_name": "Kanmani Industries",
+    "address": "Union Lane, Hospital Rd, Jaffna 40000",
+    "phone_number": "0212 214 946"
+  },
+  {
+    "store_name": "Laufs Gas Distributor Point",
+    "address": "M569+P6V, A9, Jaffna",
+    "phone_number": "0212 270 045"
+  },
+  {
+    "store_name": "Soori LPG gas",
+    "address": "M2W7+5MX, AB16, Jaffna",
+    "phone_number": "Not Available"
+  },
+  {
+    "store_name": "City line traderd",
+    "address": "751 Hospital St, Jaffna",
+    "phone_number": "Not Available"
+  },
+  {
+    "store_name": "Vaani store",
+    "address": "42 Jaffna-Kankesanturai Rd, Jaffna",
+    "phone_number": "Not Available"
+  }
+]

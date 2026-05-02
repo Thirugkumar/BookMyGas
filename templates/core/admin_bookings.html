@@ -1,0 +1,104 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Manage Bookings | Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold"><i class="fa-solid fa-list-check text-primary me-2"></i>Manage Bookings</h2>
+    </div>
+</div>
+
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Booking ID</th>
+                    <th>User</th>
+                    <th>Cylinder</th>
+                    <th>Date</th>
+                    <th>Current Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>#{{ booking.id }}</td>
+                    <td>
+                        <div class="fw-bold">{{ booking.user.username }}</div>
+                        <small class="text-muted">{{ booking.user.email }}</small>
+                    </td>
+                    <td>
+                        <div>{{ booking.cylinder.supplier_name }}</div>
+                        <small class="text-muted">{{ booking.cylinder.get_cylinder_type_display }} - {{ booking.cylinder.location }}</small>
+                    </td>
+                    <td>{{ booking.booking_date|date:"M d, Y H:i" }}</td>
+                    <td>
+                        {% if booking.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif booking.status == 'Approved' %}
+                            <span class="badge bg-info text-dark">Approved</span>
+                        {% elif booking.status == 'Delivered' %}
+                            <span class="badge bg-success">Delivered</span>
+                        {% else %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateBookingModal{{ booking.id }}">Update</button>
+                    </td>
+                </tr>
+
+                <!-- Update Booking Modal -->
+                <div class="modal fade" id="updateBookingModal{{ booking.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content" style="max-height: 90vh;">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold">Update Booking #{{ booking.id }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                <div class="modal-body p-4 overflow-auto">
+                                    <h6 class="fw-bold mb-3">Booking Details</h6>
+                                    <div class="bg-light p-3 rounded mb-4 text-start small">
+                                        <div class="mb-2"><strong>Method:</strong> {{ booking.get_delivery_method_display|default:"Pickup" }}</div>
+                                        <div class="mb-2"><strong>Date & Time:</strong> {{ booking.delivery_date|default:"-" }} at {{ booking.delivery_time|default:"-" }}</div>
+                                        <div class="mb-2"><strong>Payment:</strong> {{ booking.get_payment_method_display|default:"COD" }}</div>
+                                        <div class="mb-2"><strong>Contact:</strong> {{ booking.contact_number|default:"-" }}</div>
+                                        {% if booking.delivery_method == 'Delivery' %}
+                                        <div class="mb-2"><strong>Address:</strong> {{ booking.delivery_address }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Status</label>
+                                        <select name="status" class="form-select">
+                                            <option value="Pending" {% if booking.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                            <option value="Approved" {% if booking.status == 'Approved' %}selected{% endif %}>Approved</option>
+                                            <option value="Rejected" {% if booking.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                            <option value="Delivered" {% if booking.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No bookings found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

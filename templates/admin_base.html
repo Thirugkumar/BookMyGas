@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GasBooking Admin Portal{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css" id="flatpickr-dark-theme" disabled>
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
+</head>
+
+<body>
+    <style>
+        .admin-sidebar {
+            width: 260px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            background: rgba(20,20,30,1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .admin-main {
+            margin-left: 260px;
+            min-height: 100vh;
+            padding: 2rem;
+            background-color: #0f172a;
+            transition: all 0.3s ease;
+        }
+        .admin-content-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 2.5rem;
+            min-height: calc(100vh - 4rem);
+        }
+        .admin-nav-link {
+            color: rgba(255,255,255,0.6);
+            border-radius: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+        }
+        .admin-nav-link i {
+            width: 24px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        .admin-nav-link:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+        .admin-nav-link.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            font-weight: 600;
+        }
+        
+        body.light-theme .admin-sidebar {
+            background: white;
+            border-right: 1px solid rgba(0,0,0,0.05);
+        }
+        body.light-theme .admin-main {
+            background-color: #f1f5f9;
+        }
+        body.light-theme .admin-content-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        body.light-theme .admin-nav-link {
+            color: #64748b;
+        }
+        body.light-theme .admin-nav-link:hover {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        body.light-theme .admin-nav-link.active {
+            background: #eef2ff;
+            color: #4f46e5;
+        }
+        body.light-theme .text-light-mode-dark {
+            color: #0f172a !important;
+        }
+        body.light-theme .text-light-mode-muted {
+            color: #64748b !important;
+        }
+        
+        /* Remove default style.css .card shadows for admin portal */
+        .admin-main .card {
+            box-shadow: none !important;
+        }
+        .admin-main .card:hover {
+            box-shadow: none !important;
+            transform: none !important;
+        }
+    </style>
+
+    <div class="d-flex w-100">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar d-flex flex-column">
+            <!-- Logo Area -->
+            <div class="p-4 d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; font-weight: 800; font-size: 1.2rem;">
+                    G
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold text-light-mode-dark">GasBooking</h5>
+                    <small class="text-muted text-light-mode-muted" style="font-size: 0.75rem; letter-spacing: 0.5px; text-transform: uppercase;">Admin Portal</small>
+                </div>
+            </div>
+            
+            <!-- Navigation Links -->
+            <div class="px-3 mt-4 flex-grow-1">
+                <small class="text-muted text-light-mode-muted fw-bold px-3 mb-3 d-block" style="font-size: 0.7rem; letter-spacing: 1px;">CORE MODULES</small>
+                <div class="nav flex-column">
+                    <a href="{% url 'admin_dashboard' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'admin_dashboard_alias' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    </a>
+                    <a href="{% url 'admin_bookings' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'admin_bookings' %}active{% endif %}">
+                        <i class="fa-solid fa-clipboard-list"></i> Bookings
+                    </a>
+                    <a href="{% url 'admin_customers' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'admin_customers' %}active{% endif %}">
+                        <i class="fa-solid fa-users"></i> Customers
+                    </a>
+                    <a href="{% url 'admin_inventory' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'admin_inventory' %}active{% endif %}">
+                        <i class="fa-solid fa-boxes-stacked"></i> Inventory
+                    </a>
+                    <a href="{% url 'admin_payments' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'admin_payments' %}active{% endif %}">
+                        <i class="fa-solid fa-credit-card"></i> Payments
+                    </a>
+                    <a href="{% url 'admin_reports' %}" class="admin-nav-link {% if request.resolver_match.url_name == 'admin_reports' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-line"></i> Reports
+                    </a>
+                </div>
+            </div>
+            
+            <!-- User Footer -->
+            <div class="p-4 mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+                    <span class="text-muted text-light-mode-muted small fw-medium">Appearance</span>
+                    <button id="theme-toggle" class="btn btn-sm" style="background: rgba(128,128,128,0.1); border-radius: 8px; width: 36px; height: 36px;">
+                        <i class="fa-solid fa-moon text-light-mode-dark"></i>
+                    </button>
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div class="d-flex align-items-center gap-3 p-3 rounded-4" style="background: rgba(128,128,128,0.05); border: 1px solid rgba(128,128,128,0.1);">
+                    <div class="bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #a855f7);">
+                        {{ user.username|make_list|first|upper }}
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="text-truncate fw-bold text-light-mode-dark" style="font-size: 0.9rem;">{{ user.username }}</div>
+                        <div class="text-truncate text-primary" style="font-size: 0.75rem; font-weight: 600;">Admin</div>
+                    </div>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link text-muted p-0 text-hover-danger" title="Logout" style="text-decoration: none;">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <main class="admin-main w-100">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 12px; border-left: 4px solid var(--bs-{{ message.tags }});">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- White Rounded Content Card -->
+            <div class="admin-content-card">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+        const fpDarkTheme = document.getElementById('flatpickr-dark-theme');
+
+        // Check local storage
+        if (localStorage.getItem('theme') === 'light') {
+            body.classList.add('light-theme');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            if(fpDarkTheme) fpDarkTheme.disabled = true;
+        } else {
+            if(fpDarkTheme) fpDarkTheme.disabled = false;
+        }
+
+        // Initialize any date/time pickers
+        flatpickr("input[type=date]", { altInput: true, altFormat: "F j, Y", dateFormat: "Y-m-d" });
+        flatpickr("input[type=time]", { enableTime: true, noCalendar: true, dateFormat: "H:i", altInput: true, altFormat: "h:i K" });
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('theme', 'light');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                if(fpDarkTheme) fpDarkTheme.disabled = true;
+            } else {
+                localStorage.setItem('theme', 'dark');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                if(fpDarkTheme) fpDarkTheme.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

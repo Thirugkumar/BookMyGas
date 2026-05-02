@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row min-vh-75 align-items-center pb-5">
+    <div class="col-lg-6 text-center text-lg-start mb-5 mb-lg-0">
+        <div
+            class="badge bg-primary bg-opacity-10 text-primary mb-3 px-3 py-2 rounded-pill border border-primary border-opacity-25">
+            <i class="fa-solid fa-bolt me-2"></i> Fast & Reliable Delivery
+        </div>
+        <h1 class="display-3 fw-bold mb-4" style="line-height: 1.2;">
+            Your Premium <br>
+            <span class="text-gradient">Gas Cylinder</span><br>
+            Delivery Partner
+        </h1>
+        <p class="lead text-muted mb-5" style="font-size: 1.25rem;">
+            Find, compare, and book gas cylinders in your area with our modern platform. Experience hassle-free tracking
+            and delivery directly to your doorstep.
+        </p>
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+            <a href="{% url 'store' %}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+                Browse Store <i class="fa-solid fa-arrow-right ms-2"></i>
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'register' %}" class="btn btn-secondary btn-lg px-5 py-3 rounded-pill">
+                Create Account
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="d-flex gap-4 mt-5 pt-3 justify-content-center justify-content-lg-start">
+            <div>
+                <h3 class="fw-bold mb-1">5k+</h3>
+                <span class="text-muted small">Active Users</span>
+            </div>
+            <div class="border-start border-secondary opacity-25"></div>
+            <div>
+                <h3 class="fw-bold mb-1">10k+</h3>
+                <span class="text-muted small">Cylinders Delivered</span>
+            </div>
+            <div class="border-start border-secondary opacity-25"></div>
+            <div>
+                <h3 class="fw-bold mb-1">4.9</h3>
+                <span class="text-muted small">Customer Rating</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 position-relative">
+        <div class="card bg-transparent border-0 shadow-none">
+            <div class="position-absolute w-100 h-100 top-0 start-0 bg-primary opacity-10 rounded-circle blur-3xl"
+                style="filter: blur(100px); z-index: -1;"></div>
+            <div class="text-center p-4">
+                <i class="fa-solid fa-fire-flame-simple text-gradient"
+                    style="font-size: 15rem; filter: drop-shadow(0 20px 30px rgba(99,102,241,0.4));"></i>
+            </div>
+
+            <!-- Floating Elements -->
+            <div class="position-absolute top-0 start-0 translate-middle card p-3 shadow-lg rounded-4"
+                style="background: rgba(30,41,59,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); animation: float 6s ease-in-out infinite;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-success rounded-circle p-2 bg-opacity-25 text-success">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 fw-bold text-white small">Order Confirmed</p>
+                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">Just now</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="position-absolute bottom-0 end-0 translate-middle card p-3 shadow-lg rounded-4"
+                style="background: rgba(30,41,59,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); animation: float 8s ease-in-out infinite reverse;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary rounded-circle p-2 bg-opacity-25 text-primary">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 fw-bold text-white small">Out for Delivery</p>
+                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">Arriving in 15 mins</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-20px);
+        }
+
+        100% {
+            transform: translateY(0px);
+        }
+    }
+
+    body.light-theme .text-gradient {
+        background: linear-gradient(to right, #4f46e5, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    body.light-theme .card[style*="rgba(30,41,59,0.8)"] {
+        background: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    body.light-theme .card[style*="rgba(30,41,59,0.8)"] .text-white {
+        color: #0f172a !important;
+    }
+</style>
+{% endblock %}

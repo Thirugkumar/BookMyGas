@@ -1,0 +1,225 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Reports & Analytics | Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold"><i class="fa-solid fa-chart-line text-primary me-2"></i>Business Reports</h2>
+        <div>
+            <button class="btn btn-outline-danger me-2" onclick="exportPDF()"><i class="fa-solid fa-file-pdf me-2"></i>Export as PDF</button>
+            <button class="btn btn-outline-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel me-2"></i>Export as Excel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-4  border-0 mb-4" style="border-radius: 16px;">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold">Date Range</label>
+            <div class="input-group">
+                <input type="date" name="start_date" class="form-control custom-filter-input" placeholder="Start Date" value="{{ request.GET.start_date }}" onchange="this.form.submit()">
+                <span class="input-group-text bg-transparent border-start-0 border-end-0 text-muted">to</span>
+                <input type="date" name="end_date" class="form-control custom-filter-input" placeholder="End Date" value="{{ request.GET.end_date }}" onchange="this.form.submit()">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-muted small fw-bold">Payment Method</label>
+            <select name="payment_method" class="form-select custom-filter-input" onchange="this.form.submit()">
+                <option value="all">All Methods</option>
+                <option value="Card" {% if request.GET.payment_method == 'Card' %}selected{% endif %}>Card Payment</option>
+                <option value="COD" {% if request.GET.payment_method == 'COD' %}selected{% endif %}>Cash on Delivery</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-muted small fw-bold">Booking Type</label>
+            <select name="delivery_method" class="form-select custom-filter-input" onchange="this.form.submit()">
+                <option value="all">All Types</option>
+                <option value="Delivery" {% if request.GET.delivery_method == 'Delivery' %}selected{% endif %}>Home Delivery</option>
+                <option value="Pickup" {% if request.GET.delivery_method == 'Pickup' %}selected{% endif %}>Store Pickup</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <a href="{% url 'admin_reports' %}" class="btn btn-light w-100 rounded-pill d-flex align-items-center justify-content-center" style="height: 48px;">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card p-4  border-0 d-flex flex-row align-items-center" style="border-radius: 16px;">
+            <div class="p-3 rounded-circle me-4" style="background: rgba(99, 102, 241, 0.1);">
+                <i class="fa-solid fa-clipboard-list text-primary fa-2x"></i>
+            </div>
+            <div>
+                <h6 class="text-muted mb-1 fw-bold">Filtered Bookings</h6>
+                <h3 class="fw-bold mb-0">{{ total_bookings }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4  border-0 d-flex flex-row align-items-center" style="border-radius: 16px;">
+            <div class="p-3 rounded-circle me-4" style="background: rgba(34, 197, 94, 0.1);">
+                <i class="fa-solid fa-sack-dollar text-success fa-2x"></i>
+            </div>
+            <div>
+                <h6 class="text-muted mb-1 fw-bold">Filtered Revenue</h6>
+                <h3 class="fw-bold mb-0">LKR {{ total_revenue }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Charts -->
+    <div class="col-md-4">
+        <div class="card p-4  border-0 mb-4 h-100" style="border-radius: 16px;">
+            <h6 class="fw-bold mb-4">Delivery vs Pickup</h6>
+            <div class="position-relative" style="height: 200px;">
+                <canvas id="deliveryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <!-- Filtered Data Table -->
+        <div class="card p-4  border-0 h-100" style="border-radius: 16px;">
+            <h6 class="fw-bold mb-3">Report Data ({{ bookings|length }} records)</h6>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-hover align-middle" id="reportTable">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Date</th>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Type</th>
+                            <th>Method</th>
+                            <th>Payment</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td style="white-space: nowrap;"><small class="text-muted">{{ booking.booking_date|date:"Y-m-d H:i" }}</small></td>
+                            <td class="fw-bold">#{{ booking.id }}</td>
+                            <td>{{ booking.user.username }}</td>
+                            <td>{{ booking.cylinder.get_cylinder_type_display }}</td>
+                            <td>{{ booking.get_delivery_method_display }}</td>
+                            <td>{{ booking.payment_method }}</td>
+                            <td class="fw-semibold">LKR {{ booking.cylinder.price }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No data found for these filters.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-filter-input {
+        border-radius: 12px;
+        height: 48px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background-color: transparent;
+        transition: all 0.3s ease;
+        color: inherit;
+        font-weight: 500;
+    }
+    .custom-filter-input:hover {
+        border-color: rgba(99, 102, 241, 0.5);
+        background-color: rgba(99, 102, 241, 0.02);
+    }
+    .input-group > .custom-filter-input:first-child {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .input-group > .custom-filter-input:last-child {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    .custom-filter-input:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        background-color: transparent;
+        z-index: 5;
+    }
+    select.custom-filter-input {
+        cursor: pointer;
+    }
+    body.light-theme .custom-filter-input {
+        background-color: #fff;
+    }
+    body:not(.light-theme) select.custom-filter-input {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    }
+    body:not(.light-theme) .custom-filter-input option {
+        background-color: #1e293b;
+        color: #fff;
+        padding: 12px;
+    }
+</style>
+
+<!-- Chart.js, jsPDF, SheetJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+    // Theme colors
+    const primaryColor = 'rgba(99, 102, 241, 0.8)';
+    const secondaryColor = 'rgba(148, 163, 184, 0.8)';
+    
+    // Delivery vs Pickup Chart
+    const deliveryCtx = document.getElementById('deliveryChart').getContext('2d');
+    new Chart(deliveryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Home Delivery', 'Store Pickup'],
+            datasets: [{
+                data: [{{ delivery_count }}, {{ pickup_count }}],
+                backgroundColor: [primaryColor, secondaryColor],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // Export PDF
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text("GasBooking Reports", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text("Total Bookings: {{ total_bookings }} | Total Revenue: LKR {{ total_revenue }}", 14, 30);
+        
+        doc.autoTable({
+            html: '#reportTable',
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [99, 102, 241] }
+        });
+        
+        doc.save('BookMyGas_Report.pdf');
+    }
+
+    // Export Excel
+    function exportExcel() {
+        const table = document.getElementById("reportTable");
+        const wb = XLSX.utils.table_to_book(table, {sheet: "Reports"});
+        XLSX.writeFile(wb, "BookMyGas_Report.xlsx");
+    }
+</script>
+{% endblock %}

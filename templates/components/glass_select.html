@@ -1,0 +1,87 @@
+<div class="dropdown w-100 h-100">
+    <input type="hidden" name="{{ name }}" id="hidden_{{ name }}" value="{{ selected_value|default:'' }}">
+    <button class="btn w-100 text-start d-flex justify-content-between align-items-center dropdown-toggle" 
+            type="button" 
+            id="dropdown_{{ name }}" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false" 
+            style="border-radius: 12px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); color: inherit; border: 1px solid rgba(255,255,255,0.1); padding: 0.5rem 1rem;">
+        <span id="display_{{ name }}" class="text-truncate">
+            {% for opt in options %}
+                {% if opt.value|stringformat:"s" == selected_value|stringformat:"s" %}
+                    {{ opt.label }}
+                {% endif %}
+            {% endfor %}
+            {% if not selected_value %}{{ default_text }}{% endif %}
+        </span>
+    </button>
+    <ul class="dropdown-menu w-100 shadow-lg p-2" aria-labelledby="dropdown_{{ name }}" style="border-radius: 12px; background: rgba(30, 30, 45, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); max-height: 250px; overflow-y: auto;">
+        <li>
+            <a class="dropdown-item rounded custom-dropdown-item text-white mb-1" href="#" data-value="" data-name="{{ name }}">
+                {{ default_text }}
+            </a>
+        </li>
+        {% for option in options %}
+            <li>
+                <a class="dropdown-item rounded custom-dropdown-item text-white mb-1 {% if selected_value == option.value|stringformat:'s' %}bg-primary{% endif %}" 
+                   href="#" 
+                   data-value="{{ option.value }}" 
+                   data-name="{{ name }}">
+                    {{ option.label }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<style>
+    .custom-dropdown-item:hover {
+        background: rgba(255,255,255,0.1) !important;
+    }
+    .custom-dropdown-item.bg-primary:hover {
+        background: var(--bs-primary) !important;
+        opacity: 0.9;
+    }
+    /* Custom Scrollbar for Dropdown */
+    .dropdown-menu::-webkit-scrollbar {
+        width: 8px;
+    }
+    .dropdown-menu::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+    }
+    .dropdown-menu::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+    }
+</style>
+
+<script>
+    if (!window.customDropdownInitialized) {
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('custom-dropdown-item')) {
+                e.preventDefault();
+                const value = e.target.getAttribute('data-value');
+                const name = e.target.getAttribute('data-name');
+                const label = e.target.innerText.trim();
+                
+                document.getElementById('hidden_' + name).value = value;
+                document.getElementById('display_' + name).innerText = label;
+                
+                const parentUl = e.target.closest('ul');
+                parentUl.querySelectorAll('.custom-dropdown-item').forEach(el => {
+                    el.classList.remove('bg-primary');
+                });
+                if (value !== '') {
+                    e.target.classList.add('bg-primary');
+                }
+                
+                const form = e.target.closest('form');
+                if (form) {
+                    form.submit();
+                }
+            }
+        });
+        window.customDropdownInitialized = true;
+    }
+</script>

@@ -1,35 +1,287 @@
 {% extends 'base.html' %}
 {% block content %}
+<style>
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .step-indicator {
+        width: 30px; height: 30px; border-radius: 50%;
+        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+        display: flex; align-items: center; justify-content: center; font-weight: bold;
+    }
+    .step-indicator.completed { background: var(--bs-primary); color: white; border-color: var(--bs-primary); }
+    .step-indicator.current { border-color: var(--bs-primary); color: var(--bs-primary); }
+    body.light-theme .step-indicator { background: #e2e8f0; border-color: #cbd5e1; color: #64748b; }
+    body.light-theme .step-indicator.completed { background: var(--bs-primary); color: white; border-color: var(--bs-primary); }
+    body.light-theme .step-indicator.current { border-color: var(--bs-primary); color: var(--bs-primary); background: #fff; }
+    
+    .option-card {
+        border: 2px solid rgba(255,255,255,0.1);
+        border-radius: 12px; cursor: pointer; transition: all 0.2s;
+    }
+    .option-card:hover { border-color: rgba(99, 102, 241, 0.5); background: rgba(99, 102, 241, 0.05); }
+    .option-card.selected { border-color: var(--bs-primary); background: rgba(99, 102, 241, 0.1); }
+    
+    body.light-theme .option-card { border-color: rgba(0,0,0,0.1); }
+    body.light-theme .option-card:hover { border-color: var(--bs-primary); background: #eff6ff; }
+    body.light-theme .option-card.selected { border-color: var(--bs-primary); background: #e0e7ff; }
+</style>
+
 <div class="row justify-content-center py-5">
     <div class="col-md-8 col-lg-6">
-        <div class="card p-5 text-center">
-            <i class="fa-solid fa-circle-check text-success fa-4x mb-4"></i>
-            <h2 class="fw-bold mb-3">Confirm Booking</h2>
-            <p class="text-muted mb-4">You are about to book a gas cylinder from <strong>{{ cylinder.supplier_name }}</strong>.</p>
+        {% if success %}
+        <!-- Step 7: Success Modal -->
+        <div class="card p-5 text-center shadow-lg border-0" style="border-radius: 20px;">
+            <div class="mb-4 d-inline-block p-4 rounded-circle" style="background: rgba(34, 197, 94, 0.1);">
+                <i class="fa-solid fa-check text-success fa-4x"></i>
+            </div>
+            <h2 class="fw-bold mb-3 text-success">Booking Confirmed!</h2>
+            <p class="text-muted mb-2">Your gas is on the way!</p>
+            <p class="text-muted mb-4">Booking Reference ID: <strong class="text-primary fs-5">#BMG-{{ booking.id|stringformat:"05d" }}</strong></p>
             
-            <div class="bg-light rounded p-4 mb-4 text-start">
-                <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                    <span class="text-muted">Type:</span>
-                    <span class="fw-semibold">{{ cylinder.get_cylinder_type_display }}</span>
-                </div>
-                <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                    <span class="text-muted">Location:</span>
-                    <span class="fw-semibold">{{ cylinder.location }}</span>
-                </div>
-                <div class="d-flex justify-content-between pt-2">
-                    <span class="text-muted">Total Price:</span>
-                    <span class="fw-bold text-primary fs-5">LKR {{ cylinder.price }}</span>
-                </div>
+            <a href="{% url 'my_list' %}" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">View My Orders</a>
+        </div>
+        {% else %}
+        <!-- Wizard Flow -->
+        <div class="card p-4 shadow-lg border-0" style="border-radius: 20px;">
+            <!-- Progress Tracker -->
+            <div class="d-flex justify-content-between mb-4 px-2 position-relative">
+                <div class="position-absolute w-100" style="height: 2px; background: rgba(128,128,128,0.2); top: 14px; left: 0; z-index: 0;"></div>
+                <div class="step-indicator current position-relative" style="z-index: 1;" id="ind-1">1</div>
+                <div class="step-indicator position-relative" style="z-index: 1;" id="ind-2">2</div>
+                <div class="step-indicator position-relative" style="z-index: 1;" id="ind-3">3</div>
+                <div class="step-indicator position-relative" style="z-index: 1;" id="ind-4">4</div>
+                <div class="step-indicator position-relative" style="z-index: 1;" id="ind-5">5</div>
             </div>
 
-            <form method="post">
+            <form method="post" id="wizardForm">
                 {% csrf_token %}
-                <div class="d-flex gap-3">
-                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary w-50">Cancel</a>
-                    <button type="submit" class="btn btn-primary w-50">Confirm Booking</button>
+                <input type="hidden" name="delivery_method" id="inp_method" value="Delivery">
+                <input type="hidden" name="payment_method" id="inp_payment" value="COD">
+
+                <!-- Step 1: Date & Time -->
+                <div class="wizard-step active" id="step-1">
+                    <h4 class="fw-bold mb-3">Select Date & Time</h4>
+                    <p class="text-muted small mb-4">When do you need the cylinder?</p>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Date</label>
+                        <input type="date" name="delivery_date" id="delivery_date" class="form-control form-control-lg bg-transparent border-secondary" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted">Time</label>
+                        <input type="time" name="delivery_time" id="delivery_time" class="form-control form-control-lg bg-transparent border-secondary" required>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 py-3 fw-bold rounded-pill" onclick="nextStep(2)">Next Step <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                </div>
+
+                <!-- Step 2: Delivery Method -->
+                <div class="wizard-step" id="step-2">
+                    <h4 class="fw-bold mb-3">Delivery Method</h4>
+                    <p class="text-muted small mb-4">How would you like to receive it?</p>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="option-card p-3 text-center selected" id="opt_delivery" onclick="selectMethod('Delivery')">
+                                <i class="fa-solid fa-truck fs-3 mb-2 text-primary"></i>
+                                <h6 class="mb-0">Home Delivery</h6>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="option-card p-3 text-center" id="opt_pickup" onclick="selectMethod('Pickup')">
+                                <i class="fa-solid fa-store fs-3 mb-2 text-primary"></i>
+                                <h6 class="mb-0">Store Pickup</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary w-50 py-3 rounded-pill" onclick="prevStep(1)">Back</button>
+                        <button type="button" class="btn btn-primary w-50 py-3 fw-bold rounded-pill" onclick="nextStep(3)">Next Step</button>
+                    </div>
+                </div>
+
+                <!-- Step 3/5 Combined: Personal Details & Conditional Address -->
+                <div class="wizard-step" id="step-3">
+                    <h4 class="fw-bold mb-3">Personal Details</h4>
+                    <p class="text-muted small mb-4">Please provide your contact information.</p>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Contact Name</label>
+                        <input type="text" class="form-control form-control-lg bg-transparent border-secondary" value="{{ user.username }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Phone Number</label>
+                        <input type="text" name="contact_number" id="contact_number" class="form-control form-control-lg bg-transparent border-secondary" value="{{ user.phone_number|default:'' }}" required>
+                    </div>
+                    <div class="mb-4" id="address_section">
+                        <label class="form-label text-muted">Delivery Address</label>
+                        <textarea name="delivery_address" id="delivery_address" class="form-control form-control-lg bg-transparent border-secondary" rows="2"></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary w-50 py-3 rounded-pill" onclick="prevStep(2)">Back</button>
+                        <button type="button" class="btn btn-primary w-50 py-3 fw-bold rounded-pill" onclick="nextStep(4)">Next Step</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Payment Method -->
+                <div class="wizard-step" id="step-4">
+                    <h4 class="fw-bold mb-3">Payment Method</h4>
+                    <p class="text-muted small mb-4">Choose how you want to pay.</p>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="option-card p-3 text-center" id="opt_card" onclick="selectPayment('Card')">
+                                <i class="fa-regular fa-credit-card fs-3 mb-2 text-primary"></i>
+                                <h6 class="mb-0">Card Payment</h6>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="option-card p-3 text-center selected" id="opt_cod" onclick="selectPayment('COD')">
+                                <i class="fa-solid fa-money-bill-wave fs-3 mb-2 text-primary"></i>
+                                <h6 class="mb-0">Cash on Delivery</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary w-50 py-3 rounded-pill" onclick="prevStep(3)">Back</button>
+                        <button type="button" class="btn btn-primary w-50 py-3 fw-bold rounded-pill" onclick="prepareSummary()">Review</button>
+                    </div>
+                </div>
+
+                <!-- Step 5/6: Confirmation Summary -->
+                <div class="wizard-step" id="step-5">
+                    <h4 class="fw-bold mb-3">Review & Confirm</h4>
+                    <p class="text-muted small mb-4">Please review your booking details.</p>
+                    
+                    <div class="bg-primary bg-opacity-10 rounded-4 p-4 mb-4 border border-primary border-opacity-25 text-start">
+                        <div class="d-flex justify-content-between border-bottom border-primary border-opacity-25 pb-2 mb-2">
+                            <span class="text-muted">Supplier:</span>
+                            <span class="fw-semibold">{{ cylinder.supplier_name }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-primary border-opacity-25 pb-2 mb-2">
+                            <span class="text-muted">Type:</span>
+                            <span class="fw-semibold">{{ cylinder.get_cylinder_type_display }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-primary border-opacity-25 pb-2 mb-2">
+                            <span class="text-muted">Method:</span>
+                            <span class="fw-semibold" id="sum_method">Home Delivery</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-primary border-opacity-25 pb-2 mb-2" id="sum_address_row">
+                            <span class="text-muted">Address:</span>
+                            <span class="fw-semibold text-end" id="sum_address">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-primary border-opacity-25 pb-2 mb-2">
+                            <span class="text-muted">Date & Time:</span>
+                            <span class="fw-semibold"><span id="sum_date"></span> at <span id="sum_time"></span></span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom border-primary border-opacity-25 pb-2 mb-2">
+                            <span class="text-muted">Payment:</span>
+                            <span class="fw-semibold" id="sum_payment">COD</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-2">
+                            <span class="text-muted">Total Price:</span>
+                            <span class="fw-bold text-primary fs-5">LKR {{ cylinder.price }}</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary w-50 py-3 rounded-pill" onclick="prevStep(4)">Back</button>
+                        <button type="submit" class="btn btn-success w-50 py-3 fw-bold rounded-pill">Confirm Booking</button>
+                    </div>
                 </div>
             </form>
         </div>
+        {% endif %}
     </div>
 </div>
+
+<script>
+    let currentStep = 1;
+
+    function selectMethod(method) {
+        document.getElementById('inp_method').value = method;
+        document.getElementById('opt_delivery').classList.remove('selected');
+        document.getElementById('opt_pickup').classList.remove('selected');
+        if(method === 'Delivery') {
+            document.getElementById('opt_delivery').classList.add('selected');
+            document.getElementById('address_section').style.display = 'block';
+            document.getElementById('delivery_address').setAttribute('required', 'true');
+        } else {
+            document.getElementById('opt_pickup').classList.add('selected');
+            document.getElementById('address_section').style.display = 'none';
+            document.getElementById('delivery_address').removeAttribute('required');
+        }
+    }
+
+    function selectPayment(method) {
+        document.getElementById('inp_payment').value = method;
+        document.getElementById('opt_card').classList.remove('selected');
+        document.getElementById('opt_cod').classList.remove('selected');
+        if(method === 'Card') {
+            document.getElementById('opt_card').classList.add('selected');
+        } else {
+            document.getElementById('opt_cod').classList.add('selected');
+        }
+    }
+
+    function validateStep(step) {
+        if(step === 1) {
+            const date = document.getElementById('delivery_date').value;
+            const time = document.getElementById('delivery_time').value;
+            if(!date || !time) { alert("Please select both Date and Time."); return false; }
+        }
+        if(step === 3) {
+            const phone = document.getElementById('contact_number').value;
+            if(!phone) { alert("Please enter your phone number."); return false; }
+            const method = document.getElementById('inp_method').value;
+            if(method === 'Delivery') {
+                const addr = document.getElementById('delivery_address').value;
+                if(!addr) { alert("Please enter delivery address."); return false; }
+            }
+        }
+        return true;
+    }
+
+    function updateIndicators(step) {
+        for(let i=1; i<=5; i++) {
+            let el = document.getElementById('ind-'+i);
+            if(el) {
+                el.classList.remove('current', 'completed');
+                if(i < step) el.classList.add('completed');
+                if(i === step) el.classList.add('current');
+            }
+        }
+    }
+
+    function nextStep(step) {
+        if(!validateStep(step-1)) return;
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+        document.getElementById('step-' + step).classList.add('active');
+        updateIndicators(step);
+    }
+
+    function prevStep(step) {
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+        document.getElementById('step-' + step).classList.add('active');
+        updateIndicators(step);
+    }
+
+    function prepareSummary() {
+        if(!validateStep(4)) return;
+        document.getElementById('sum_method').innerText = document.getElementById('inp_method').value === 'Delivery' ? 'Home Delivery' : 'Store Pickup';
+        document.getElementById('sum_date').innerText = document.getElementById('delivery_date').value;
+        document.getElementById('sum_time').innerText = document.getElementById('delivery_time').value;
+        document.getElementById('sum_payment').innerText = document.getElementById('inp_payment').value === 'Card' ? 'Card Payment' : 'Cash on Delivery';
+        
+        if(document.getElementById('inp_method').value === 'Delivery') {
+            document.getElementById('sum_address_row').style.display = 'flex';
+            document.getElementById('sum_address').innerText = document.getElementById('delivery_address').value;
+        } else {
+            document.getElementById('sum_address_row').style.display = 'none';
+        }
+        
+        nextStep(5);
+    }
+
+    // Initialize state
+    document.addEventListener("DOMContentLoaded", () => {
+        selectMethod('Delivery');
+    });
+</script>
 {% endblock %}

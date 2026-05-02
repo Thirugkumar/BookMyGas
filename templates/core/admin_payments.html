@@ -1,0 +1,141 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Payments | Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold"><i class="fa-solid fa-credit-card text-primary me-2"></i>Payments Management</h2>
+    </div>
+</div>
+
+<style>
+    .custom-filter-input {
+        border-radius: 12px;
+        height: 48px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background-color: transparent;
+        transition: all 0.2s ease;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        color: inherit;
+    }
+    .custom-filter-input:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        background-color: transparent;
+    }
+    .custom-filter-input:hover {
+        border-color: rgba(148, 163, 184, 0.6);
+    }
+    body.light-theme .custom-filter-input {
+        background-color: #fff;
+    }
+    body:not(.light-theme) .custom-filter-input option {
+        background-color: #1e293b;
+        color: #fff;
+    }
+</style>
+
+<div class="card p-4  border-0 mb-4" style="border-radius: 16px;">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold">Filter by Method</label>
+            <select id="filterMethod" class="form-select custom-filter-input" onchange="filterPayments()">
+                <option value="all">All Methods</option>
+                <option value="Card">Card Payment</option>
+                <option value="COD">Cash on Delivery</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold">Filter by Status</label>
+            <select id="filterStatus" class="form-select custom-filter-input" onchange="filterPayments()">
+                <option value="all">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Paid/Approved</option>
+                <option value="Rejected">Failed/Rejected</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold">Filter by Date</label>
+            <input type="date" id="filterDate" class="form-control custom-filter-input" onchange="filterPayments()">
+        </div>
+    </div>
+</div>
+
+<div class="card p-4  border-0" style="border-radius: 16px;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" id="paymentsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Customer Name</th>
+                    <th>Payment Method</th>
+                    <th>Amount (LKR)</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr data-method="{{ booking.payment_method }}" data-status="{{ booking.status }}" data-date="{{ booking.booking_date|date:'Y-m-d' }}">
+                    <td class="fw-bold">#{{ booking.id }}</td>
+                    <td>{{ booking.user.username }}</td>
+                    <td>
+                        {% if booking.payment_method == 'Card' %}
+                            <i class="fa-regular fa-credit-card text-primary me-1"></i> Card
+                        {% else %}
+                            <i class="fa-solid fa-money-bill-wave text-success me-1"></i> COD
+                        {% endif %}
+                    </td>
+                    <td class="fw-semibold">{{ booking.cylinder.price }}</td>
+                    <td>
+                        {% if booking.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif booking.status == 'Approved' or booking.status == 'Delivered' %}
+                            <span class="badge bg-success">Paid/Success</span>
+                        {% else %}
+                            <span class="badge bg-danger">Failed/Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ booking.booking_date|date:"Y-m-d H:i" }}</small></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-receipt fa-3x mb-3 text-secondary opacity-50"></i>
+                        <h5>No transactions found.</h5>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function filterPayments() {
+    const method = document.getElementById('filterMethod').value;
+    const status = document.getElementById('filterStatus').value;
+    const date = document.getElementById('filterDate').value;
+    
+    const rows = document.querySelectorAll('#paymentsTable tbody tr[data-method]');
+    
+    rows.forEach(row => {
+        const rowMethod = row.getAttribute('data-method');
+        const rowStatus = row.getAttribute('data-status');
+        const rowDate = row.getAttribute('data-date');
+        
+        let matchMethod = (method === 'all' || method === rowMethod);
+        let matchStatus = (status === 'all' || status === rowStatus || (status === 'Approved' && rowStatus === 'Delivered'));
+        let matchDate = (!date || date === rowDate);
+        
+        if (matchMethod && matchStatus && matchDate) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

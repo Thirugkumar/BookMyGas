@@ -1,60 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gas Cylinder Booking{% endblock %}</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css" id="flatpickr-dark-theme" disabled>
     <!-- Custom CSS -->
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
 </head>
+
 <body>
-    {% if user.is_authenticated %}
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">
-                <i class="fa-solid fa-fire-flame-simple text-danger me-2"></i>GasBooking
+    <style>
+        /* Glassmorphism Navbar */
+        .glass-navbar {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        body.light-theme .glass-navbar {
+            background: rgba(255, 255, 255, 0.7);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Nav Link Underline Animation */
+        .nav-link.custom-nav-link {
+            position: relative;
+            padding-bottom: 5px;
+            font-weight: 500;
+        }
+        .nav-link.custom-nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: var(--bs-primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        .nav-link.custom-nav-link:hover::after,
+        .nav-link.custom-nav-link.active::after {
+            width: 80%;
+        }
+
+        /* Glassmorphism Footer */
+        .glass-footer {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            margin-top: auto;
+        }
+        body.light-theme .glass-footer {
+            background: rgba(255, 255, 255, 0.6);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+    </style>
+
+    <nav class="navbar navbar-expand-lg sticky-top glass-navbar">
+        <div class="container py-1">
+            <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+                <i class="fa-solid fa-fire-flame-simple text-primary me-2"></i>GasBooking
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon" style="filter: invert(1) grayscale(100%) brightness(200%);"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+            <div class="collapse navbar-collapse d-lg-flex justify-content-between" id="navbarNav">
+                <!-- Center items -->
+                <ul class="navbar-nav mx-auto align-items-center gap-2">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                        <a class="nav-link custom-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Home</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                        <a class="nav-link custom-nav-link {% if request.resolver_match.url_name == 'store' %}active{% endif %}" href="{% url 'store' %}">Store</a>
+                    </li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                        <a class="nav-link custom-nav-link {% if request.resolver_match.url_name == 'my_list' %}active{% endif %}" href="{% url 'my_list' %}">My Order List</a>
+                    </li>
+                </ul>
+
+                <!-- Right items -->
+                <ul class="navbar-nav align-items-center gap-2">
+                    <!-- Theme Toggle -->
+                    <li class="nav-item me-lg-3 mt-3 mt-lg-0">
+                        <button id="theme-toggle" class="btn btn-link nav-link" aria-label="Toggle Theme">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item mt-3 mt-lg-0">
                         <form method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link nav-link text-danger">Logout</button>
+                            <button type="submit" class="btn btn-secondary nav-link px-4 py-2"
+                                style="border-radius: 12px;">Logout</button>
                         </form>
                     </li>
+                    {% else %}
+                    <li class="nav-item mt-3 mt-lg-0">
+                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                        <a class="btn btn-primary px-4 py-2 rounded-pill" href="{% url 'register' %}">Sign Up</a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
-    {% endif %}
 
-    <main class="{% block main_class %}container py-5{% endblock %}">
+    <main class="{% block main_class %}container py-5 flex-grow-1{% endblock %}">
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert"
+            style="background: rgba(30,41,59,0.9); color: white; border: 1px solid rgba(255,255,255,0.1);">
+            {{ message }}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
         {% endif %}
-        
+
         {% block content %}{% endblock %}
     </main>
 
+    <footer class="glass-footer">
+        <div class="container text-center">
+            <div class="mb-3 footer-links d-flex justify-content-center gap-4">
+                <a href="#" class="text-muted text-hover-primary"><i class="fa-brands fa-twitter fs-5"></i></a>
+                <a href="#" class="text-muted text-hover-primary"><i class="fa-brands fa-facebook fs-5"></i></a>
+                <a href="#" class="text-muted text-hover-primary"><i class="fa-brands fa-instagram fs-5"></i></a>
+                <a href="#" class="text-muted text-hover-primary"><i class="fa-brands fa-linkedin fs-5"></i></a>
+            </div>
+            <p class="text-muted small mb-3">&copy; 2026 GasBooking Inc. All rights reserved.</p>
+            <div class="d-flex justify-content-center gap-4 small">
+                <a href="#" class="text-muted text-decoration-none text-hover-primary">Privacy Policy</a>
+                <a href="#" class="text-muted text-decoration-none text-hover-primary">Terms of Service</a>
+                <a href="#" class="text-muted text-decoration-none text-hover-primary">Contact Us</a>
+            </div>
+        </div>
+    </footer>
+
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+        const fpDarkTheme = document.getElementById('flatpickr-dark-theme');
+
+        // Check local storage
+        if (localStorage.getItem('theme') === 'light') {
+            body.classList.add('light-theme');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            if(fpDarkTheme) fpDarkTheme.disabled = true;
+        } else {
+            if(fpDarkTheme) fpDarkTheme.disabled = false;
+        }
+
+        // Initialize any date/time pickers
+        flatpickr("input[type=date]", { altInput: true, altFormat: "F j, Y", dateFormat: "Y-m-d" });
+        flatpickr("input[type=time]", { enableTime: true, noCalendar: true, dateFormat: "H:i", altInput: true, altFormat: "h:i K" });
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            if (body.classList.contains('light-theme')) {
+                localStorage.setItem('theme', 'light');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                if(fpDarkTheme) fpDarkTheme.disabled = true;
+            } else {
+                localStorage.setItem('theme', 'dark');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                if(fpDarkTheme) fpDarkTheme.disabled = false;
+            }
+        });
+    </script>
 </body>
+
 </html>
